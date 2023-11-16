@@ -1,0 +1,13 @@
+12 S T
+C E 28
+E A 10
+A C 23
+F E 26
+A T 27
+C F 16
+S D 3
+F T 1
+S F 10
+A F 14
+D F 16
+S E 29

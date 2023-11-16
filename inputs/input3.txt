@@ -1,0 +1,6 @@
+5 O N
+A N 2
+O Q 10
+O A 7
+Q A 4
+Q N 7

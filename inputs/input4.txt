@@ -1,0 +1,16 @@
+15 G Q
+G K 13
+L K 15
+K D 20
+L A 5
+K T 35
+A D 10
+L Q 12
+D Q 6
+G D 21
+A K 20
+A Q 13
+L D 27
+G A 1
+T L 14
+K Q 33

@@ -1,0 +1,11 @@
+10 N K
+W K 33
+Y W 11
+N W 13
+D B 17
+W D 25
+B Y 8
+B K 17
+Y D 1
+N K 15
+Y K 10

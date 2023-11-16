@@ -1,0 +1,5 @@
+4 R N
+E I 3
+I N 5
+R E 5
+E N 3

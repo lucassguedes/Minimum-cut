@@ -1,0 +1,12 @@
+11 H A
+O S 15
+S A 14
+B O 12
+S E 9
+H B 4
+F A 12
+B A 12
+E F 11
+F O 42
+S B 9
+S F 29
