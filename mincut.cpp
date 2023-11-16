@@ -4,9 +4,10 @@
 #include <algorithm>
 #include <limits>
 
+#define NEGATIVE_INFINITY -std::numeric_limits<double>::infinity()
+
 typedef std::vector< std::vector<char> > Matrixc;
 
-/*Precisa ser testada*/
 double calculateDist(std::vector<char> v1, std::vector<char> v2, std::map<char, std::map<char, double> > &connections)
 {
     double dist = 0;
@@ -25,7 +26,6 @@ double calculateDist(std::vector<char> v1, std::vector<char> v2, std::map<char, 
 
 }
 
-/*Precisa ser testada*/
 double calculateDistMat(Matrixc A, std::vector<char> v2, std::map<char, std::map<char, double> > &connections)
 {
     double dist = 0;
@@ -37,51 +37,77 @@ double calculateDistMat(Matrixc A, std::vector<char> v2, std::map<char, std::map
     return dist;
 }
 
-
-/*Precisa ser testada*/
-double getTighlyConnectedVertex(int aIndex, Matrixc A, Matrixc vertices, std::map<char, std::map<char, double> > &connections)
+void showVertices(Matrixc vertices)
 {
-    double greaterDist = -std::numeric_limits<double>::infinity();
-    double greaterIdx = -1;
-    double calculatedDist;
-
-    std::vector< std::pair< int , double> > idx_dist; /*Índices dos "vertices" e seus custos associados*/
-    for(size_t i = 0; i < vertices.size() && i != aIndex; i++)
+    std::cout << "Vertices: ";
+    for(auto k : vertices)
     {
-        calculatedDist = calculateDistMat(A, vertices[i], connections);
-
-        idx_dist.push_back(std::make_pair(i, calculatedDist));
+        std::cout << "(";
+        for(auto u : k)
+        {
+            std::cout << u << ", ";
+        }
+        std::cout << ") -- ";
     }
-
-    /*Ordenando os vértices em "vertices" pelas distâncias*/
-    std::sort(idx_dist.begin(), idx_dist.end(), [](const std::pair<int, double> &a, 
-                                                   const std::pair<int, double> &b) {return a.second > b.second;});
-
-    /*Inserindo vértices dependendo do quão fortemente ligados a A eles estão*/
-    for(size_t i = 0; i < idx_dist.size(); i++)
-    {
-        A.push_back(vertices[idx_dist[i].first]);
-    }
-
-    /*Juntar aqui os últimos dois vértices que foram inseridos em A*/
-    double cut_of_the_phase = idx_dist[0].second;
-
-
-    return cut_of_the_phase;
+    std::cout << std::endl;
 }
 
 
-double minCutPhase(Matrixc &vertices, int aIndex)
+double minCutPhase(Matrixc &vertices, int aIndex, std::map<char, std::map<char, double> > &connections)
 {
+    double cut_of_the_phase;
+    int greaterIdx;
+    double greaterCost = NEGATIVE_INFINITY;
+    const int N = vertices.size();
+    double dist;
+
     Matrixc A = {vertices[aIndex]};
 
-    while(A.size() != vertices.size())
-    {
+    std::cout << "N = " << N << std::endl;
 
-    }
     
+    std::vector<int> remainingIdx; //Lista de vértices que ainda não foram incluídos em A
+    for(size_t i = 0; i < N; i++) remainingIdx.push_back(i);
 
-    return 0.0;
+    /*Removendo aIndex da lista de índices de vértices disponíveis*/
+    remainingIdx.erase(std::remove(remainingIdx.begin(), remainingIdx.end(), aIndex), remainingIdx.end());
+
+    std::cout << "Iniciando minCutPhase...\n";
+    while(A.size() < N)
+    {
+        /*Procurando pelo vértice mais fortemente ligado à A*/
+        std::cout << "A:";
+        showVertices(A);
+
+        std::cout<<"Indices dos vertices restantes: ";
+        for(auto v : remainingIdx) std::cout << v << " ";
+        std::cout << std::endl;
+
+        greaterCost = NEGATIVE_INFINITY;
+        std::cout << "\nProcurando pelo vertice mais fortemente ligado...\n";
+        for(size_t i : remainingIdx)
+        {
+            dist = calculateDistMat(A, vertices[i], connections);
+            std::cout << "dist: " << dist << std::endl;
+
+            std::cout << "\tPosicao: " << i << ", custo: " << dist << std::endl;
+            if(dist > greaterCost)
+            {
+                greaterCost = dist;
+                greaterIdx = i;
+            }
+        }
+        std::cout << "Selecionando vertice da posicao " << greaterIdx << ", cujo custo eh " << greaterCost << std::endl;
+        /*Inserindo vértice mais fortemente ligado à A em A*/
+        A.push_back(vertices[greaterIdx]);
+        /*Removendo o índice desse vértice da lista de vértices que ainda estão disponíveis*/
+        remainingIdx.erase(std::remove(remainingIdx.begin(), remainingIdx.end(), greaterIdx), remainingIdx.end());
+
+        if(remainingIdx.size() == 1)
+            cut_of_the_phase = calculateDistMat(A, vertices[0], connections);
+    }
+
+    return cut_of_the_phase;
 }
 
 /*Esta função é usada apenas para inserir vértices que não são múltiplos*/
@@ -99,21 +125,6 @@ void insertElement(Matrixc &vertices, char element)
     }
     if(!found)
         vertices.push_back(std::vector<char>({element}));
-}
-
-void showVertices(Matrixc vertices)
-{
-    std::cout << "Vertices: ";
-    for(auto k : vertices)
-    {
-        std::cout << "(";
-        for(auto u : k)
-        {
-            std::cout << u << ", ";
-        }
-        std::cout << ") -- ";
-    }
-    std::cout << std::endl;
 }
 
 int main(void)
@@ -142,6 +153,23 @@ int main(void)
     }
 
     showVertices(vertices);
+
+
+    minCutPhase(vertices, 0, connections);
+
+
+
+
+    /*Tests*/
+
+    // std::cout << calculateDist(std::vector<char>({'G', 'U'}), std::vector<char>({'Z'}), connections) << std::endl;
+
+    // Matrixc A = Matrixc();
+
+    // A.push_back(std::vector<char>({'G', 'U'}));
+    // A.push_back(std::vector<char>({'Z'}));
+
+    // std::cout << calculateDistMat(A, std::vector<char>({'J'}), connections) << std::endl;
 
 
     return 0;
