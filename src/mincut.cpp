@@ -1,8 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <limits>
+#include "mincut.hpp"
 
 #define NEGATIVE_INFINITY -std::numeric_limits<double>::infinity()
 
@@ -34,7 +30,17 @@ double calculateDist(std::vector<int> v1, std::vector<int> v2, double ** connect
     {
         for(size_t j = 0; j < v2.size(); j++)
         {
-            dist += connections[v1[i]][v2[j]];
+            int a, b;
+
+            connections[v1[i]][v2[j]];
+
+            if(v1[i] > v2[j])
+            {
+                dist += connections[v2[j]][v1[i]];
+            }else{
+                dist += connections[v1[i]][v2[j]];
+            }
+            
         }
     }
 
@@ -69,21 +75,49 @@ double calculateMaxDistMat(Matrixd A, std::vector<int> v2, double ** connections
 
 void showVertices(Matrixd vertices)
 {
+    const size_t nVertices = vertices.size();
+    size_t nsubvertices;
     std::cout << "Vertices: ";
-    for(auto k : vertices)
+    for(size_t i = 0; i < nVertices; i++)
     {
-        std::cout << "(";
-        for(auto u : k)
+        nsubvertices = vertices[i].size();
+        std::cout << "{";
+        for(size_t j = 0; j < nsubvertices; j++)
         {
-            std::cout << u << ", ";
+            std::cout << vertices[i][j];
+            if(j < nsubvertices - 1)
+                std::cout << ", ";
+            else
+                std::cout << "}";
         }
-        std::cout << ") -- ";
+        if(i < nVertices - 1)
+            std::cout << " -- ";
+        else 
+            std::cout << std::endl;
     }
-    std::cout << std::endl;
+}
+
+Matrixd treatPartition(Matrixd partition)
+{
+    std::vector<int> last = partition[partition.size() - 1];
+    std::vector<int> first_part;
+    Matrixd result;
+
+    partition.pop_back();
+
+    for(size_t i = 0; i < partition.size(); i++)
+    {
+        first_part.insert(first_part.end(), partition[i].begin(), partition[i].end());
+    }
+
+    result.push_back(first_part);
+    result.push_back(last);
+
+    return result;
 }
 
 
-double minCutPhase(Matrixd &vertices, int aIndex, double ** connections)
+double minCutPhase(Matrixd &bestPartition, Matrixd &vertices, int aIndex, double ** connections)
 {
     double cut_of_the_phase = std::numeric_limits<double>::infinity();
     int greaterIdx;
@@ -158,9 +192,11 @@ double minCutPhase(Matrixd &vertices, int aIndex, double ** connections)
     }
 
     
-    std::cout << "\033[1;36mA - ";
+    std::cout << "\033[1;36m Partição Final A - ";
     showVertices(A);
     std::cout <<  "\033[0m\n";
+
+    bestPartition = treatPartition(A);
 
     std::cout << "\033[1;34mCut-of-the-phase: " << cut_of_the_phase << "\033[0m\n";
 
@@ -171,8 +207,12 @@ double minCutPhase(Matrixd &vertices, int aIndex, double ** connections)
     return cut_of_the_phase;
 }
 
-double minCut(Matrixd &vertices, double ** connections)
+Matrixd minCut(int n, double ** connections)
 {
+    Matrixd vertices;
+    Matrixd partition;
+    for(size_t i = 0; i < n; i++)vertices.push_back(std::vector<int>({i}));
+
     double minimum = std::numeric_limits<double>::infinity();
     double cut_of_the_phase;
     Matrixd bestSet;
@@ -181,7 +221,7 @@ double minCut(Matrixd &vertices, double ** connections)
         std::cout << "\033[1;31mMincut - ";
         showVertices(vertices);
         std::cout << "\033[0m\n";
-        cut_of_the_phase = minCutPhase(vertices, 0, connections);
+        cut_of_the_phase = minCutPhase(partition, vertices, 0, connections);
 
         std::cout << "\033[1;32mMincut (vertices unidos) - ";
         showVertices(vertices);
@@ -189,15 +229,16 @@ double minCut(Matrixd &vertices, double ** connections)
 
         if(cut_of_the_phase < minimum)
         {
-            bestSet = vertices;
+            bestSet = partition;
             minimum = cut_of_the_phase;
         }
     }
 
     std::cout << "Melhor particao - ";
     showVertices(bestSet);
+    std::cout << "Minimum: " << minimum << std::endl;
 
-    return minimum;
+    return bestSet;
 }
 
 /*Esta função é usada apenas para inserir vértices que não são múltiplos*/
@@ -215,90 +256,4 @@ void insertElement(Matrixd &vertices, int element)
     }
     if(!found)
         vertices.push_back(std::vector<int>({element}));
-}
-
-int main(void)
-{
-    int nConnections;
-    char cap1, cap2;
-    char island1, island2;
-    double importance;
-    Matrixd vertices;
-    std::map<int, std::map<int, double> > distances;
-
-    std::map<char, std::map<char, double> > connections;
-    std::vector<char>unique_islands;
-
-    std::cin >> nConnections >> cap1 >> cap2;
-
-    insertElement(vertices, 0);
-    insertElement(vertices, 1);
-
-    for(size_t i = 0; i < nConnections; i++)
-    {
-        std::cin >> island1 >> island2 >> importance;
-
-        if(std::find(unique_islands.begin(), unique_islands.end(), island1) == unique_islands.end())
-            unique_islands.push_back(island1);
-
-        if(std::find(unique_islands.begin(), unique_islands.end(), island2) == unique_islands.end())
-            unique_islands.push_back(island2);
-
-
-        int k, u;
-
-        k = std::find(unique_islands.begin(), unique_islands.end(), island1) - unique_islands.begin();
-        u = std::find(unique_islands.begin(), unique_islands.end(), island2) - unique_islands.begin();
-        std::cout << "k = " << k << ", u = " << u << std::endl;
-        
-        connections[island1][island2] = connections[island2][island1] = importance;
-        distances[k][u] = distances[u][k] = importance;
-
-        insertElement(vertices, k);
-        insertElement(vertices, u);
-    }
-
-    std::cout << "Elementos unicos: ";
-    for(auto k : unique_islands)std::cout << k << " ";
-    std::cout << std::endl;
-
-    int dim = unique_islands.size();
-    double ** dist = new double*[dim];
-
-    std::cout << "Matriz de distancias: \n";
-    for(size_t i = 0; i < dim; i++)
-    {
-        dist[i] = new double[dim];
-        for(size_t j = 0; j < dim; j++)
-        {   
-            if(distances[i].find(j) != distances[i].end())
-                dist[i][j] = distances[i][j];
-            else
-                dist[i][j] = 0;
-            std::cout << dist[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    // std::cout.setstate(std::ios_base::failbit);
-    double minimum = minCut(vertices, dist);
-    // std::cout.clear();
-    std::cout <<  minimum << std::endl;
-
-
-
-
-    /*Tests*/
-
-    // std::cout << calculateDist(std::vector<char>({'G', 'U'}), std::vector<char>({'Z'}), connections) << std::endl;
-
-    // Matrixc A = Matrixc();
-
-    // A.push_back(std::vector<char>({'G', 'U'}));
-    // A.push_back(std::vector<char>({'Z'}));
-
-    // std::cout << calculateDistMat(A, std::vector<char>({'J'}), connections) << std::endl;
-
-
-    return 0;
 }
