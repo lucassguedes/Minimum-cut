@@ -7,6 +7,12 @@
 #ifndef __MINCUT_H__
 #define __MINCUT_H__
 
+
+class SuperVertex{
+    std::vector<int> vertices;
+    std::map<int, double> distances;
+};
+
 #define NEGATIVE_INFINITY -std::numeric_limits<double>::infinity()
 
 typedef std::vector< std::vector<char> > Matrixc;

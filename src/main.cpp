@@ -3,65 +3,9 @@
 #include <map>
 #include <algorithm>
 #include <limits>
+#include <fstream>
 #include "mincut.hpp"
 
-
-void convertInput(double ***costMatrix, int &dim)
-{
-    /*As linhas 265 a 328 são somente para transformar a entrada para o formato de matriz*/
-    int nConnections;
-    char cap1, cap2;
-    char island1, island2;
-    double importance;
-    Matrixd vertices;
-    std::map<int, std::map<int, double> > distances;
-
-    std::map<char, std::map<char, double> > connections;
-    std::vector<char>unique_islands;
-
-    std::cin >> nConnections >> cap1 >> cap2;
-
-    insertElement(vertices, 0);
-    insertElement(vertices, 1);
-
-    for(size_t i = 0; i < nConnections; i++)
-    {
-        std::cin >> island1 >> island2 >> importance;
-
-        if(std::find(unique_islands.begin(), unique_islands.end(), island1) == unique_islands.end())
-            unique_islands.push_back(island1);
-
-        if(std::find(unique_islands.begin(), unique_islands.end(), island2) == unique_islands.end())
-            unique_islands.push_back(island2);
-
-
-        int k, u;
-
-        k = std::find(unique_islands.begin(), unique_islands.end(), island1) - unique_islands.begin();
-        u = std::find(unique_islands.begin(), unique_islands.end(), island2) - unique_islands.begin();
-        
-        connections[island1][island2] = connections[island2][island1] = importance;
-        distances[k][u] = distances[u][k] = importance;
-
-        insertElement(vertices, k);
-        insertElement(vertices, u);
-    }
-
-    dim = unique_islands.size();
-    double** dist = new double*[dim];
-    for(size_t i = 0; i < dim; i++)
-    {
-        (dist)[i] = new double[dim];
-        for(size_t j = 0; j < dim; j++)
-        {   
-            if(distances[i].find(j) != distances[i].end())
-                dist[i][j] = distances[i][j];
-            else
-                dist[i][j] = 0;
-        }
-    }
-    *costMatrix = dist;
-}
 
 void showMatrix(double** costMatrix, int n)
 {
@@ -75,15 +19,43 @@ void showMatrix(double** costMatrix, int n)
     }
 }
 
-int main(void)
+int main(int argc, char ** argv)
 {
     int dim;
-    double **dist;
+    std::string instanceName = argv[1];
 
 
-    /*A entrada deve ser digitada no terminal, de acordo com o formato das
-      entradas encontradas na pasta "inputs".*/
-    convertInput(&dist, dim);
+    std::ifstream file(instanceName);
+
+
+    file >> dim;
+
+
+    double** dist = new double*[dim];
+    for(size_t i = 0; i < dim; i++)
+    {
+        (dist)[i] = new double[dim];
+        for(size_t j = 0; j < dim; j++)
+        {   
+            file >> dist[i][j];
+        }
+    }
+
+    std::cout << "DIM: " << dim << std::endl;
+    for(size_t i = 0; i < dim; i++)
+    {
+        for(size_t j = 0; j < dim; j++)
+        {
+            std::cout << dist[i][j];
+            if(j < (dim-1))
+            {
+                std::cout << " ";
+            }else{
+                std::cout << std::endl;
+            }
+        }
+    }
+
 
 
     std::cout << "Matriz de distancias: \n";
