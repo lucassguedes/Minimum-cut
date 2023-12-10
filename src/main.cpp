@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <fstream>
-#include "mincut.hpp"
+#include "mincut_v2.hpp"
 
 
 void showMatrix(double** costMatrix, int n)
@@ -61,9 +61,11 @@ int main(int argc, char ** argv)
     std::cout << "Matriz de distancias: \n";
     showMatrix(dist, dim);
 
-    Matrixd cutSetPool = minCut(dim, dist);
+    CutSetPool cutSetPool = minCut(dim, dist);
 
-    showVertices(cutSetPool);
+    // Matrixd cutSetPool = minCut(dim, dist);
+
+    // showVertices(cutSetPool);
 
     for(size_t i = 0; i < dim; i++)
         delete[] dist[i];

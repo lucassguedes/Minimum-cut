@@ -1,7 +1,7 @@
 CXX = g++
 CXX_BIN = /usr/bin/g++
 
-CXXFLAGS = -Wall -fPIC -std=c++11 -O3 -DNDEBUG -Iinclude -I. -DARCH_K8 -Wno-deprecated -DUSE_CBC -DUSE_CLP -DUSE_BOP -DUSE_GLOP
+CXXFLAGS = -Wall -fPIC -std=c++11 -g -DNDEBUG -Iinclude -I. -DARCH_K8 -Wno-deprecated -DUSE_CBC -DUSE_CLP -DUSE_BOP -DUSE_GLOP
 
 BINDIR := bin
 OBJDIR := obj
