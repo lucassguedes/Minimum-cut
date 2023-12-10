@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <fstream>
-#include "mincut_v2.hpp"
+#include "mincut.hpp"
 
 
 void showMatrix(double** costMatrix, int n)

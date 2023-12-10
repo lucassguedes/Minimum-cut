@@ -1,4 +1,4 @@
-#include "mincut_v2.hpp"
+#include "mincut.hpp"
 
 #define NEGATIVE_INFINITY -std::numeric_limits<double>::infinity()
 #define POSITIVE_INFINITY std::numeric_limits<double>::infinity()
@@ -50,9 +50,13 @@ void mergeVertices(VertexCollection & collection, std::vector<int> &identifiers,
     collection[smallerIdentifier].insert(collection[smallerIdentifier].begin(), collection[greaterIdentifier].begin(), collection[greaterIdentifier].end());
     collection.erase(greaterIdentifier);
 
+    distMap[smallerIdentifier][greaterIdentifier] = distMap[greaterIdentifier][smallerIdentifier] = 0;
     /*Atualizando custos*/
     for(auto id : identifiers){
         distMap[smallerIdentifier][id] += distMap[greaterIdentifier][id];
+        distMap[id][smallerIdentifier] += distMap[greaterIdentifier][id];
+        distMap[smallerIdentifier].erase(greaterIdentifier);
+        distMap[id].erase(greaterIdentifier);
     }
 
     identifiers.erase(std::remove(identifiers.begin(), identifiers.end(), greaterIdentifier), identifiers.end());
@@ -90,7 +94,7 @@ DistMap getDistMap(double ** matrix, const int n)
 }
 
 
-int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, std::vector<bool> included, std::vector<int> identifiers, DistMap distMap)
+int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, std::map<int, bool> included, std::vector<int> identifiers, DistMap distMap)
 {
     double maxDist, maxId, dist;
 
@@ -110,7 +114,6 @@ int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, s
                 maxId = i;
             }
         }
-        std::cout << "Dist: " << dist << std::endl;
         
     }
 
@@ -124,7 +127,10 @@ double minCutPhase(int &last, int &penultimate, CutSetPool &bestCut, VertexColle
     const int N = vertices.size();
 
     std::vector<int> A = {initVertexIdx};
-    std::vector<bool> included = std::vector<bool> (N, false);
+    std::map<int, bool> included;
+
+    for(auto k : identifiers)included[k]=false;
+
     included[initVertexIdx] = true;
 
     while(A.size() < N)
@@ -133,6 +139,9 @@ double minCutPhase(int &last, int &penultimate, CutSetPool &bestCut, VertexColle
         A.push_back(tightVertexId);
         std::cout << "tightVertexId: " << tightVertexId << std::endl;
         included[tightVertexId] = true;
+        std::cout << "Include vertices: ";
+        for(auto k : included)std::cout << k.first << ": " << k.second << ", ";
+        std::cout << std::endl;
     }
 
     last = A[A.size() - 1];
@@ -214,10 +223,21 @@ CutSetPool minCut(int n, double ** matrix)
 
     double minimum = POSITIVE_INFINITY, cut_of_the_phase;
 
+
+    for(auto k : distMap)
+    {
+        for(auto u: k.second)
+        {
+            std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
+        }
+        std::cout<< std::endl;
+    }
+
+
     showVertexCollection(vertexCollection);
     while(vertexCollection.size() > 2)
     {
-        cut_of_the_phase = minCutPhase(last, penultimate, bestCut, vertexCollection, identifiers, identifiers[0], distMap);
+        cut_of_the_phase = minCutPhase(last, penultimate, cutFound, vertexCollection, identifiers, identifiers[0], distMap);
 
         std::cout << "cut-of-the-phase: " << cut_of_the_phase << std::endl;
         std::cout << "CutSetPool: \n";
@@ -228,7 +248,19 @@ CutSetPool minCut(int n, double ** matrix)
             minimum = cut_of_the_phase;
         }
 
+        std::cout << "Fazendo merge dos vértices " << last << " e " << penultimate << std::endl;
         mergeVertices(vertexCollection, identifiers, last, penultimate, distMap);
+        std::cout << "Identificadores: ";
+        for(auto k : identifiers) std::cout << k << " ";
+        std::cout << std::endl;
+        for(auto k : distMap)
+        {
+            for(auto u: k.second)
+            {
+                std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
+            }
+            std::cout<< std::endl;
+        }
         showVertexCollection(vertexCollection);
 
     }

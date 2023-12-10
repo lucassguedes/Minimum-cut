@@ -4,8 +4,8 @@
 #include <algorithm>
 #include <limits>
 
-#ifndef __MINCUTV2_H__
-#define __MINCUTV2_H__
+#ifndef __MINCUT_H__
+#define __MINCUT_H__
 
 typedef std::vector< std::vector<int> > CutSetPool;
 typedef std::vector< std::vector<int> > Matrix;
