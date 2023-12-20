@@ -78,16 +78,16 @@ DistMap getDistMap(double ** matrix, const int n)
 
     for(size_t i = 0; i < n; i++) dists[i] = std::map<int, double> ();
 
-    std::cout << "Definindo matriz: \n";
+    // std::cout << "Definindo matriz: \n";
     for(size_t i = 0; i < n; i++)
     {
         for(size_t j = 0; j < n; j++)
         {
             if(matrix[i][j] < threshold) matrix[i][j] = 0.0;
             dists[i][j] = dists[j][i] = matrix[i][j];
-            std::cout << dists[i][j] << " ";
+            // std::cout << dists[i][j] << " ";
         }
-        std::cout << std::endl;
+        // std::cout << std::endl;
     }
 
     return dists;
@@ -99,6 +99,7 @@ int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, s
     double maxDist, maxId, dist;
 
     maxDist = NEGATIVE_INFINITY;
+    maxId = -1;
     for(int i : identifiers)//Percorre todos os identificadores (todos os vértices)
     {
         dist = 0;
@@ -120,7 +121,7 @@ int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, s
     return maxId;
 }
 
-double minCutPhase(int &last, int &penultimate, CutSetPool &bestCut, VertexCollection vertices, std::vector<int> &identifiers, const int initVertexIdx, DistMap distMap)
+double minCutPhase(int n, int &last, int &penultimate, std::vector<int> &bestCut, VertexCollection vertices, std::vector<int> &identifiers, const int initVertexIdx, DistMap distMap)
 {
     double cut_of_the_phase = 0, greaterCost=NEGATIVE_INFINITY, dist;
     int tightVertexId;
@@ -133,9 +134,9 @@ double minCutPhase(int &last, int &penultimate, CutSetPool &bestCut, VertexColle
 
     included[initVertexIdx] = true;
 
-    std::cout << "A: ";
-    for(auto k : A)std::cout << k << " ";
-    std::cout << std::endl;
+    // std::cout << "A: ";
+    // for(auto k : A)std::cout << k << " ";
+    // std::cout << std::endl;
     while(A.size() < N)
     {
         tightVertexId = getTightlyVertexId(A, vertices, included, identifiers, distMap);
@@ -144,10 +145,10 @@ double minCutPhase(int &last, int &penultimate, CutSetPool &bestCut, VertexColle
         included[tightVertexId] = true;
         std::cout << "A: ";
         for(auto k : A)std::cout << k << " ";
-        std::cout << std::endl;
-        std::cout << "Include vertices: ";
-        for(auto k : included)std::cout << k.first << ": " << k.second << ", ";
-        std::cout << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "Include vertices: ";
+        // for(auto k : included)std::cout << k.first << ": " << k.second << ", ";
+        // std::cout << std::endl;
     }
 
     last = A[A.size() - 1];
@@ -166,13 +167,21 @@ double minCutPhase(int &last, int &penultimate, CutSetPool &bestCut, VertexColle
     A.pop_back(); /*Removendo último elemento incluído*/
     
     /*Obtendo o corte do grafo*/
-    bestCut = CutSetPool();
-    bestCut.push_back({});
+    std::vector<int> firstCut;
     for(auto element : A)
     {
-        bestCut[0].insert(bestCut[0].begin(), vertices[element].begin(), vertices[element].end());
+        firstCut.insert(firstCut.begin(), vertices[element].begin(), vertices[element].end());
     }
-    bestCut.push_back(vertices[last]);
+    
+    if(cut_of_the_phase <= 1.9999999)
+    {
+        if(vertices[last].size() <= n/2)
+        {
+            bestCut = vertices[last];
+        }else{
+            bestCut = firstCut;
+        }
+    }
 
 
     return cut_of_the_phase;
@@ -188,7 +197,8 @@ CutSetPool minCut(int n, double ** matrix)
     /*Identificadores dos vértices que serão unidos*/
     int last, penultimate;
 
-    CutSetPool bestCut, cutFound;
+    CutSetPool cutSetPool;
+    std::vector<int> cutFound;
 
     /*Identificadores ainda ativos
 
@@ -230,50 +240,51 @@ CutSetPool minCut(int n, double ** matrix)
     double minimum = POSITIVE_INFINITY, cut_of_the_phase;
 
 
-    for(auto k : distMap)
-    {
-        for(auto u: k.second)
-        {
-            std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
-        }
-        std::cout<< std::endl;
-    }
+    // for(auto k : distMap)
+    // {
+    //     for(auto u: k.second)
+    //     {
+    //         std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
+    //     }
+    //     std::cout<< std::endl;
+    // }
 
 
-    showVertexCollection(vertexCollection);
+    // showVertexCollection(vertexCollection);
     while(vertexCollection.size() > 1)
     {
-        cut_of_the_phase = minCutPhase(last, penultimate, cutFound, vertexCollection, identifiers, identifiers[0], distMap);
+        cut_of_the_phase = minCutPhase(n, last, penultimate, cutFound, vertexCollection, identifiers, identifiers[0], distMap);
 
-        std::cout << "cut-of-the-phase: " << cut_of_the_phase << std::endl;
-        std::cout << "CutSetPool: \n";
-        showCutSetPool(bestCut);
-        if(cut_of_the_phase < minimum)
+        // std::cout << "cut-of-the-phase: " << cut_of_the_phase << std::endl;
+        // std::cout << "CutSetPool: \n";
+        // showCutSetPool(cutSetPool);
+        if(!cutFound.empty())
         {
-            bestCut = cutFound;
+            cutSetPool.push_back(cutFound);
             minimum = cut_of_the_phase;
+            cutFound.clear();
         }
 
-        std::cout << "Fazendo merge dos vértices " << last << " e " << penultimate << std::endl;
+        // std::cout << "Fazendo merge dos vértices " << last << " e " << penultimate << std::endl;
         mergeVertices(vertexCollection, identifiers, last, penultimate, distMap);
-        std::cout << "Identificadores: ";
-        for(auto k : identifiers) std::cout << k << " ";
-        std::cout << std::endl;
-        for(auto k : distMap)
-        {
-            for(auto u: k.second)
-            {
-                std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
-            }
-            std::cout<< std::endl;
-        }
-        showVertexCollection(vertexCollection);
+        // std::cout << "Identificadores: ";
+        // for(auto k : identifiers) std::cout << k << " ";
+        // std::cout << std::endl;
+        // for(auto k : distMap)
+        // {
+        //     for(auto u: k.second)
+        //     {
+        //         std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
+        //     }
+        //     std::cout<< std::endl;
+        // }
+        // showVertexCollection(vertexCollection);
 
     }
 
-    std::cout << "Minimum: " << minimum << std::endl;
-    std::cout << "CutSetPool: \n";
-    showCutSetPool(bestCut);
+    // std::cout << "Minimum: " << minimum << std::endl;
+    // std::cout << "CutSetPool: \n";
+    // showCutSetPool(cutSetPool);
 
-    return bestCut;
+    return cutSetPool;
 }
