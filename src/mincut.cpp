@@ -107,7 +107,7 @@ int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, s
         {
             for(int idx : collection)
             {
-                dist += distMap[i][idx];
+                dist += (idx > i) ? distMap[i][idx] : distMap[idx][i];
             }
             if(dist > maxDist)
             {
@@ -141,10 +141,10 @@ double minCutPhase(int n, int &last, int &penultimate, std::vector<int> &bestCut
     {
         tightVertexId = getTightlyVertexId(A, vertices, included, identifiers, distMap);
         A.push_back(tightVertexId);
-        std::cout << "tightVertexId: " << tightVertexId << std::endl;
+        // std::cout << "tightVertexId: " << tightVertexId << std::endl;
         included[tightVertexId] = true;
-        std::cout << "A: ";
-        for(auto k : A)std::cout << k << " ";
+        // std::cout << "A: ";
+        // for(auto k : A)std::cout << k << " ";
         // std::cout << std::endl;
         // std::cout << "Include vertices: ";
         // for(auto k : included)std::cout << k.first << ": " << k.second << ", ";
@@ -255,7 +255,7 @@ CutSetPool minCut(int n, double ** matrix)
     {
         cut_of_the_phase = minCutPhase(n, last, penultimate, cutFound, vertexCollection, identifiers, identifiers[0], distMap);
 
-        // std::cout << "cut-of-the-phase: " << cut_of_the_phase << std::endl;
+        std::cout << "cut-of-the-phase: " << cut_of_the_phase << std::endl;
         // std::cout << "CutSetPool: \n";
         // showCutSetPool(cutSetPool);
         if(!cutFound.empty())

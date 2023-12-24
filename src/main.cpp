@@ -397,11 +397,6 @@ vector<vector<int>> MinCut(double**x, int n){
 
 
 
-
-
-
-
-
 void showMatrix(double** costMatrix, int n)
 {
     for(size_t i = 0; i < n; i++)
@@ -427,12 +422,15 @@ int main(int argc, char ** argv)
 
 
     double** dist = new double*[dim];
+    double** dist2 = new double*[dim];
     for(size_t i = 0; i < dim; i++)
     {
-        (dist)[i] = new double[dim];
+        dist[i] = new double[dim];
+        dist2[i] = new double[dim];
         for(size_t j = 0; j < dim; j++)
         {   
             file >> dist[i][j];
+            dist2[i][j] = dist[i][j];
         }
     }
 
@@ -457,11 +455,14 @@ int main(int argc, char ** argv)
     showMatrix(dist, dim);
 
     CutSetPool cutSetPool = minCut(dim, dist);
-    // CutSetPool cutSetPool = MinCut(dist, dim);
+    std::cout << "tam: " << cutSetPool.size() << std::endl;
+    showCutSetPool(cutSetPool);
 
 
-    // std::cout << "tam: " << cutSetPool.size() << std::endl;
-    // showCutSetPool(cutSetPool);
+    cutSetPool = MinCut(dist2, dim);
+    std::cout << "tam: " << cutSetPool.size() << std::endl;
+    showCutSetPool(cutSetPool);
+
     
     // Matrixd cutSetPool = minCut(dim, dist);
 
