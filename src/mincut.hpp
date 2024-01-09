@@ -3,6 +3,7 @@
 #include <map>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 
 #ifndef __MINCUT_H__
 #define __MINCUT_H__
@@ -13,10 +14,10 @@ typedef std::map<int, std::map<int, double > > DistMap;
 typedef std::map<int, std::vector<int> > VertexCollection;
 
 
+void clearInvalidValues(double ** matrix, const int n);
 void showCutSetPool(CutSetPool cutSetPool);
-DistMap getDistMap(double ** matrix, const int n);
-int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, std::vector<bool> included, std::vector<int> identifiers, DistMap distMap);
-double minCutPhase(int n, int &last, int &penultimate, CutSetPool &bestCut, VertexCollection vertices, std::vector<int> &identifiers, const int initVertexIdx, DistMap distMap);
+int getTightlyVertexId(std::vector<int> collection, std::vector<std::vector<int> > vertices, std::map<int, bool> included, std::vector<int> identifiers, double** distMap);
+double minCutPhase(int n, int &last, int &penultimate, std::vector<std::vector<int> > &bestCut, std::vector<std::vector<int> > vertices, std::vector<int> &identifiers, const int initVertexIdx, double ** matrix);
 
 
 CutSetPool minCut(int n, double ** matrix);

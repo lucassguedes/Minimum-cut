@@ -4,6 +4,21 @@
 #define POSITIVE_INFINITY std::numeric_limits<double>::infinity()
 #define IDENTIFIER 0
 
+#define EPSILON 0.00000001
+
+
+int getNVertices(std::vector<std::vector<int> > vertices)
+{
+    int count=0;
+    const int n = vertices.size();
+    for(int i = 0; i < n; i++)
+    {
+        if(vertices[i].size())
+            count++;
+    }
+    return count;
+}
+
 void showVertexCollection(VertexCollection collection)
 {
     for(auto v : collection)
@@ -33,68 +48,45 @@ void showCutSetPool(CutSetPool cutSetPool)
 }
 
 
-void mergeVertices(VertexCollection & collection, std::vector<int> &identifiers, int i, int j, DistMap &distMap)
+void mergeVertices(std::vector<std::vector<int> > &collection, std::vector<int> &identifiers, int i, int j, double **matrix)
 {
-    int greaterIdentifier, smallerIdentifier;
+    int newIdx, toBeRemoved;
 
-    if(i > j)
+    /*Fazendo merge dos vértices*/
+    if(collection[i][0] < collection[j][0])
     {
-        greaterIdentifier = i;
-        smallerIdentifier = j;
+        collection[i].insert(collection[i].end(), collection[j].begin(), collection[j].end());
+        newIdx = i;
+        toBeRemoved = j;
     }else{
-        greaterIdentifier = j;
-        smallerIdentifier = i;
+        collection[j].insert(collection[j].end(), collection[i].begin(), collection[i].end());
+        newIdx = j;
+        toBeRemoved = i;
     }
 
-    /*Juntando vértices*/
-    collection[smallerIdentifier].insert(collection[smallerIdentifier].begin(), collection[greaterIdentifier].begin(), collection[greaterIdentifier].end());
-    collection.erase(greaterIdentifier);
-
-    distMap[smallerIdentifier][greaterIdentifier] = distMap[greaterIdentifier][smallerIdentifier] = 0;
-    /*Atualizando custos*/
-    for(auto id : identifiers){
-        distMap[smallerIdentifier][id] += distMap[greaterIdentifier][id];
-        distMap[id][smallerIdentifier] += distMap[greaterIdentifier][id];
-        distMap[smallerIdentifier].erase(greaterIdentifier);
-        distMap[id].erase(greaterIdentifier);
-    }
-
-    identifiers.erase(std::remove(identifiers.begin(), identifiers.end(), greaterIdentifier), identifiers.end());
-    distMap.erase(greaterIdentifier);
-}
+    collection[toBeRemoved].clear();
 
 
+    identifiers.erase(std::remove(identifiers.begin(), identifiers.end(), toBeRemoved), identifiers.end());
 
-/*Função  para  obter a matriz de distâncias na forma de um map.
-  A  utilização desta estrutura facilita na hora de atualizar os
-  valores das distâncias, já que nos permite facilmente eliminar
-  linhas e colunas da "matriz" sem alterar os índices das linhas
-  e colunas remanescentes.
-*/
-DistMap getDistMap(double ** matrix, const int n)
-{
-    const double threshold = 0.00000001;
-    DistMap dists;
-
-    for(size_t i = 0; i < n; i++) dists[i] = std::map<int, double> ();
-
-    // std::cout << "Definindo matriz: \n";
-    for(size_t i = 0; i < n; i++)
+    matrix[newIdx][toBeRemoved] = matrix[toBeRemoved][newIdx] = 0;
+    double cost;
+    /*Atualizando distâncias*/
+    for(auto idx : identifiers)
     {
-        for(size_t j = 0; j < n; j++)
-        {
-            if(matrix[i][j] < threshold) matrix[i][j] = 0.0;
-            dists[i][j] = dists[j][i] = matrix[i][j];
-            // std::cout << dists[i][j] << " ";
-        }
-        // std::cout << std::endl;
+        cost = (toBeRemoved > idx) ? matrix[idx][toBeRemoved] : matrix[toBeRemoved][idx];
+        
+        matrix[idx][toBeRemoved] = matrix[toBeRemoved][idx] = 0;
+
+        matrix[newIdx][idx] += cost;
+        matrix[idx][newIdx] += cost;
+
     }
 
-    return dists;
 }
 
 
-int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, std::map<int, bool> included, std::vector<int> identifiers, DistMap distMap)
+int getTightlyVertexId(std::vector<int> collection, std::vector<std::vector<int> > vertices, std::map<int, bool> included, std::vector<int> identifiers, double** distMap)
 {
     double maxDist, maxId, dist;
 
@@ -107,7 +99,8 @@ int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, s
         {
             for(int idx : collection)
             {
-                dist += (idx > i) ? distMap[i][idx] : distMap[idx][i];
+                const double cost = (idx > i) ? distMap[i][idx] : distMap[idx][i];
+                dist += (std::isnan(cost)) ? 0 : cost;
             }
             if(dist > maxDist)
             {
@@ -121,11 +114,11 @@ int getTightlyVertexId(std::vector<int> collection, VertexCollection vertices, s
     return maxId;
 }
 
-double minCutPhase(int n, int &last, int &penultimate, std::vector<int> &bestCut, VertexCollection vertices, std::vector<int> &identifiers, const int initVertexIdx, DistMap distMap)
+double minCutPhase(int n, int &last, int &penultimate, std::vector<std::vector<int> > &bestCut, std::vector<std::vector<int> > vertices, std::vector<int> &identifiers, const int initVertexIdx, double ** matrix)
 {
-    double cut_of_the_phase = 0, greaterCost=NEGATIVE_INFINITY, dist;
+    double cut_of_the_phase = 0;
     int tightVertexId;
-    const int N = vertices.size();
+    const int N = getNVertices(vertices);
 
     std::vector<int> A = {initVertexIdx};
     std::map<int, bool> included;
@@ -134,21 +127,11 @@ double minCutPhase(int n, int &last, int &penultimate, std::vector<int> &bestCut
 
     included[initVertexIdx] = true;
 
-    // std::cout << "A: ";
-    // for(auto k : A)std::cout << k << " ";
-    // std::cout << std::endl;
     while(A.size() < N)
     {
-        tightVertexId = getTightlyVertexId(A, vertices, included, identifiers, distMap);
+        tightVertexId = getTightlyVertexId(A, vertices, included, identifiers, matrix);
         A.push_back(tightVertexId);
-        // std::cout << "tightVertexId: " << tightVertexId << std::endl;
         included[tightVertexId] = true;
-        // std::cout << "A: ";
-        // for(auto k : A)std::cout << k << " ";
-        // std::cout << std::endl;
-        // std::cout << "Include vertices: ";
-        // for(auto k : included)std::cout << k.first << ": " << k.second << ", ";
-        // std::cout << std::endl;
     }
 
     last = A[A.size() - 1];
@@ -160,7 +143,7 @@ double minCutPhase(int n, int &last, int &penultimate, std::vector<int> &bestCut
     {
         if(i != last)
         {
-            cut_of_the_phase += distMap[i][last];
+            cut_of_the_phase += (last > i) ? matrix[i][last] : matrix[last][i];
         }
     }
 
@@ -173,32 +156,44 @@ double minCutPhase(int n, int &last, int &penultimate, std::vector<int> &bestCut
         firstCut.insert(firstCut.begin(), vertices[element].begin(), vertices[element].end());
     }
     
-    if(cut_of_the_phase <= 1.9999999)
-    {
-        if(vertices[last].size() <= n/2)
-        {
-            bestCut = vertices[last];
-        }else{
-            bestCut = firstCut;
-        }
-    }
+	bestCut.push_back(vertices[last]);
+	bestCut.push_back(firstCut);
 
 
     return cut_of_the_phase;
 
 }
 
+void clearInvalidValues(double ** matrix, const int n)
+{
+    const int threshold = 1e-8;
+
+    for(int i = 0; i < n; i++)
+    {
+        for(int j = 0; j < n; j++)
+        {
+            if(matrix[i][j] < threshold || std::isnan(matrix[i][j])) matrix[i][j] = 0;
+        }
+    }
+
+}
+
 
 CutSetPool minCut(int n, double ** matrix)
 {
-    DistMap distMap;
-    distMap = getDistMap(matrix, n);
-
     /*Identificadores dos vértices que serão unidos*/
     int last, penultimate;
 
     CutSetPool cutSetPool;
-    std::vector<int> cutFound;
+    std::vector<std::vector<int> > cutFound;
+
+    for(int i = 0; i < n; i++){
+        for(int j = i+1; j < n; j++){
+            if(matrix[i][j] < EPSILON){
+                matrix[i][j] = 0;
+            }
+        }
+    }
 
     /*Identificadores ainda ativos
 
@@ -208,83 +203,31 @@ CutSetPool minCut(int n, double ** matrix)
     */
     std::vector<int> identifiers; 
 
-    /*Coleção de vértices
-    
-      A    utilização    de    um   map  permite-nos atribuir um identificador 
-      a   cada   vértice.   Inicialmente    temos somente vértices "solitários"
-      e   os   identificadores  são  iguais  ao vértices únicos aos quais estão 
-      associados.  Por exemplo,  se  tivermos  n=3, teremos a seguinte coleção:
-
-      {0: {0}, 1: {1}, 2: {2}}
-
-      Em  algum momento do programa, alguns vértices são unidos. Em um cenário
-      como este, por exemplo, podemos unir os vértices 1 e 2. Nessas situações, 
-      uniremos  os dois vértices mantendo o menor identificador, resultando em:
-
-      {0: {0}, 1: {1, 2}}
-
-      Logo  em  seguida,  devemos atualizar a distMap para que as distâncias do 
-      vértice  de  identificador  2 sejam somadas ao vértice de identificador 1
-      e,  logo  após  isso,  devemos  fazer com que as distâncias do vértice de 
-      identificador  2  até  todos  os  outros  vértices seja zerada, pois este 
-      identificador não existe mais.
-    */
-    VertexCollection vertexCollection;
+    std::vector<std::vector<int> > vertices;
 
     /*Inicializando a coleção de vértices - inicialmente "solitários"*/
     for(size_t i = 0; i < n; i++){
-        vertexCollection.insert(std::make_pair(i, std::vector<int>({i})));
+        vertices.push_back(std::vector<int>({i}));
         identifiers.push_back(i);
     }
 
     double minimum = POSITIVE_INFINITY, cut_of_the_phase;
 
-
-    // for(auto k : distMap)
-    // {
-    //     for(auto u: k.second)
-    //     {
-    //         std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
-    //     }
-    //     std::cout<< std::endl;
-    // }
-
-
-    // showVertexCollection(vertexCollection);
-    while(vertexCollection.size() > 1)
+    while(getNVertices(vertices) > 2)
     {
-        cut_of_the_phase = minCutPhase(n, last, penultimate, cutFound, vertexCollection, identifiers, identifiers[0], distMap);
+        cut_of_the_phase = minCutPhase(n, last, penultimate, cutFound, vertices, identifiers, identifiers[0], matrix);
 
-        std::cout << "cut-of-the-phase: " << cut_of_the_phase << std::endl;
-        // std::cout << "CutSetPool: \n";
-        // showCutSetPool(cutSetPool);
-        if(!cutFound.empty())
+        if(cut_of_the_phase < minimum)
         {
-            cutSetPool.push_back(cutFound);
+            cutSetPool = cutFound;
             minimum = cut_of_the_phase;
             cutFound.clear();
         }
 
-        // std::cout << "Fazendo merge dos vértices " << last << " e " << penultimate << std::endl;
-        mergeVertices(vertexCollection, identifiers, last, penultimate, distMap);
-        // std::cout << "Identificadores: ";
-        // for(auto k : identifiers) std::cout << k << " ";
-        // std::cout << std::endl;
-        // for(auto k : distMap)
-        // {
-        //     for(auto u: k.second)
-        //     {
-        //         std::cout << k.first << "---( " << u.second << " )--> " << u.first << ";";
-        //     }
-        //     std::cout<< std::endl;
-        // }
-        // showVertexCollection(vertexCollection);
+        mergeVertices(vertices, identifiers, last, penultimate, matrix);
 
     }
 
-    // std::cout << "Minimum: " << minimum << std::endl;
-    // std::cout << "CutSetPool: \n";
-    // showCutSetPool(cutSetPool);
-
+	std::cout << "Minimu = " << minimum << "\n";
     return cutSetPool;
 }
