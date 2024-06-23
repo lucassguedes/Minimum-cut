@@ -3,96 +3,33 @@
 #include <map>
 #include <algorithm>
 #include <limits>
-#include <fstream>
 #include <vector>
 #include "mincut.hpp"
+#include "Data.hpp"
 
-#define EPSILON 0.00000001
-
-using namespace std;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void showMatrix(double** costMatrix, int n)
-{
-    for(size_t i = 0; i < n; i++)
-    {
-        for(size_t j = 0; j < n; j++)
-        {
-            std::cout << costMatrix[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-}
+using std::cout;
+using std::vector;
+using std::endl;
 
 int main(int argc, char ** argv)
 {
+    double** dist; 
     int dim;
-    std::string instanceName = argv[1];
 
+    readData(argv[1], &dist, &dim);
+    
+    
+    cout << "Dimension: " << dim << endl;
 
-    std::ifstream file(instanceName);
-
-
-    file >> dim;
-
-
-    double** dist = new double*[dim];
-    for(size_t i = 0; i < dim; i++)
-    {
-        dist[i] = new double[dim];
-        for(size_t j = 0; j < dim; j++)
-        {   
-            file >> dist[i][j];
-        }
-    }
-
-    std::cout << "DIM: " << dim << std::endl;
-    for(size_t i = 0; i < dim; i++)
-    {
-        for(size_t j = 0; j < dim; j++)
-        {
-            std::cout << dist[i][j];
-            if(j < (dim-1))
-            {
-                std::cout << " ";
-            }else{
-                std::cout << std::endl;
-            }
-        }
-    }
-
-
-
-    std::cout << "Matriz de distancias: \n";
+    cout << "Matrix: \n";
     showMatrix(dist, dim);
 
     CutSetPool cutSetPool = minCut(dim, dist);
-    std::cout << "tam: " << cutSetPool.size() << std::endl;
+
+    cout << "Cutsetpool: \n";
     showCutSetPool(cutSetPool);
-    
-    // Matrixd cutSetPool = minCut(dim, dist);
 
-    // showVertices(cutSetPool);
-
-    for(size_t i = 0; i < dim; i++)
+    for(int i = 0; i < dim; i++)
         delete[] dist[i];
     delete[] dist;
 

@@ -6,10 +6,9 @@
 
 #define EPSILON 0.00000001
 
-
-int getNVertices(std::vector<std::vector<int> > vertices)
+unsigned int getNVertices(vector<vector<int> > vertices)
 {
-    int count=0;
+    unsigned int count=0;
     const int n = vertices.size();
     for(int i = 0; i < n; i++)
     {
@@ -19,19 +18,6 @@ int getNVertices(std::vector<std::vector<int> > vertices)
     return count;
 }
 
-void showVertexCollection(VertexCollection collection)
-{
-    for(auto v : collection)
-    {
-        std::cout << v.first << ": (";
-        for(auto element : v.second)
-        {
-            std::cout << element << " ";
-        }
-        std::cout << ") ";
-    }
-    std::cout << std::endl;
-}
 
 void showCutSetPool(CutSetPool cutSetPool)
 {
@@ -41,14 +27,14 @@ void showCutSetPool(CutSetPool cutSetPool)
     {
         for(size_t j = 0 ; j < cutSetPool[i].size(); j++)
         {
-            std::cout << cutSetPool[i][j] << " ";
+            cout << cutSetPool[i][j] << " ";
         }
-        std::cout << std::endl;
+        cout << endl;
     }
 }
 
 
-void mergeVertices(std::vector<std::vector<int> > &collection, std::vector<int> &identifiers, int i, int j, double **matrix)
+void mergeVertices(vector<vector<int> > &collection, vector<int> &identifiers, int i, int j, double **matrix)
 {
     int newIdx, toBeRemoved;
 
@@ -86,7 +72,7 @@ void mergeVertices(std::vector<std::vector<int> > &collection, std::vector<int> 
 }
 
 
-int getTightlyVertexId(std::vector<int> collection, std::vector<std::vector<int> > vertices, std::map<int, bool> included, std::vector<int> identifiers, double** distMap)
+int getTightlyVertexId(vector<int> collection, vector<vector<int> > vertices, std::map<int, bool> included, vector<int> identifiers, double** distMap)
 {
     double maxDist, maxId, dist;
 
@@ -114,13 +100,13 @@ int getTightlyVertexId(std::vector<int> collection, std::vector<std::vector<int>
     return maxId;
 }
 
-double minCutPhase(int n, int &last, int &penultimate, std::vector<std::vector<int> > &bestCut, std::vector<std::vector<int> > vertices, std::vector<int> &identifiers, const int initVertexIdx, double ** matrix)
+double minCutPhase(int n, int &last, int &penultimate, vector<vector<int> > &bestCut, vector<vector<int> > vertices, vector<int> &identifiers, const int initVertexIdx, double ** matrix)
 {
     double cut_of_the_phase = 0;
     int tightVertexId;
-    const int N = getNVertices(vertices);
+    const unsigned int N = getNVertices(vertices);
 
-    std::vector<int> A = {initVertexIdx};
+    vector<int> A = {initVertexIdx};
     std::map<int, bool> included;
 
     for(auto k : identifiers)included[k]=false;
@@ -150,7 +136,7 @@ double minCutPhase(int n, int &last, int &penultimate, std::vector<std::vector<i
     A.pop_back(); /*Removendo último elemento incluído*/
     
     /*Obtendo o corte do grafo*/
-    std::vector<int> firstCut;
+    vector<int> firstCut;
     for(auto element : A)
     {
         firstCut.insert(firstCut.begin(), vertices[element].begin(), vertices[element].end());
@@ -164,28 +150,13 @@ double minCutPhase(int n, int &last, int &penultimate, std::vector<std::vector<i
 
 }
 
-void clearInvalidValues(double ** matrix, const int n)
-{
-    const int threshold = 1e-8;
-
-    for(int i = 0; i < n; i++)
-    {
-        for(int j = 0; j < n; j++)
-        {
-            if(matrix[i][j] < threshold || std::isnan(matrix[i][j])) matrix[i][j] = 0;
-        }
-    }
-
-}
-
-
 CutSetPool minCut(int n, double ** matrix)
 {
     /*Identificadores dos vértices que serão unidos*/
     int last, penultimate;
 
     CutSetPool cutSetPool;
-    std::vector<std::vector<int> > cutFound;
+    vector<vector<int> > cutFound;
 
     for(int i = 0; i < n; i++){
         for(int j = i+1; j < n; j++){
@@ -201,13 +172,13 @@ CutSetPool minCut(int n, double ** matrix)
       identificador dos dois deve ser desativado e, portanto,
       removido da lista de identificadores.
     */
-    std::vector<int> identifiers; 
+    vector<int> identifiers; 
 
-    std::vector<std::vector<int> > vertices;
+    vector<vector<int> > vertices;
 
     /*Inicializando a coleção de vértices - inicialmente "solitários"*/
-    for(size_t i = 0; i < n; i++){
-        vertices.push_back(std::vector<int>({i}));
+    for(int i = 0; i < n; i++){
+        vertices.push_back(vector<int>({i}));
         identifiers.push_back(i);
     }
 
@@ -228,6 +199,6 @@ CutSetPool minCut(int n, double ** matrix)
 
     }
 
-	std::cout << "Minimu = " << minimum << "\n";
+	cout << "Minimum = " << minimum << "\n";
     return cutSetPool;
 }
