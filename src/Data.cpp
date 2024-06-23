@@ -5,6 +5,12 @@ void readData(const char * instance_name, double *** costMatrix, int *dim){
     std::string instanceName = instance_name;
     std::ifstream file(instanceName);
 
+
+    if(!file)
+    {
+        throw std::runtime_error("Arquivo de entrada não encontrado!");
+    }
+
     double ** matrix;
 
     file >> *dim;

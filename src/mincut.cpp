@@ -62,8 +62,9 @@ void mergeVertices(vector<vector<int> > &collection, vector<int> &identifiers, i
     {
         cost = (toBeRemoved > idx) ? matrix[idx][toBeRemoved] : matrix[toBeRemoved][idx];
         
-        matrix[idx][toBeRemoved] = matrix[toBeRemoved][idx] = 0;
 
+        /*Atualizando matriz de distâncias*/
+        matrix[idx][toBeRemoved] = matrix[toBeRemoved][idx] = 0;
         matrix[newIdx][idx] += cost;
         matrix[idx][newIdx] += cost;
 
@@ -100,6 +101,20 @@ int getTightlyVertexId(vector<int> collection, vector<vector<int> > vertices, st
     return maxId;
 }
 
+
+/*
+    nome: minCutPhase
+    Parâmetros:
+        * n -> Quantidade de vértices
+        * last -> Último vértice adicionado ao conjunto A (ver função minCutPhase)
+        * penultimate -> Penúltimo vértice a adicionado ao conjunto A
+        * cutFound -> Corte encontrado
+        * vertices -> Conjunto de vértices (que é modificado quando vértices são unidos)
+        * identifiers -> Identificadores dos vértices. 
+            ** Sempre que um vértice Y é unido a um vértice X, o vértice resultante
+                será identificado por min(X, Y).
+        * matrix -> Matriz de distâncias entre os vértices            
+*/
 double minCutPhase(int n, int &last, int &penultimate, vector<vector<int> > &bestCut, vector<vector<int> > vertices, vector<int> &identifiers, const int initVertexIdx, double ** matrix)
 {
     double cut_of_the_phase = 0;
@@ -157,15 +172,6 @@ CutSetPool minCut(int n, double ** matrix)
 
     CutSetPool cutSetPool;
     vector<vector<int> > cutFound;
-
-    for(int i = 0; i < n; i++){
-        for(int j = i+1; j < n; j++){
-            if(matrix[i][j] < EPSILON){
-                matrix[i][j] = 0;
-            }
-        }
-    }
-
     /*Identificadores ainda ativos
 
       Ao  fazer  a  junção  entre  dois  vértices,  o  maior
@@ -184,9 +190,13 @@ CutSetPool minCut(int n, double ** matrix)
 
     double minimum = POSITIVE_INFINITY, cut_of_the_phase;
 
+    /*A cada iteração, vértices são "fundidos", tornando a quantidade de vértices menor.
+      O loop deve se repetir enquanto houverem mais de dois vértices no conjunto.
+    */
     while(getNVertices(vertices) > 2)
     {
         cut_of_the_phase = minCutPhase(n, last, penultimate, cutFound, vertices, identifiers, identifiers[0], matrix);
+
 
         if(cut_of_the_phase < minimum)
         {
